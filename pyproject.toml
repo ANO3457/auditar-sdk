@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "auditar-sdk"
+version = "0.1.0"
+description = "Zero-knowledge inference instrumentation for AI decision audit."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Auditar / Pulvan Technologies", email = "foundersoffice@auditar.in"},
+]
+keywords = ["ai", "governance", "audit", "mlops", "fintech", "india"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.0",
+    "tenacity>=8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "respx>=0.21",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["auditar_sdk*"]
+
+[project.urls]
+Homepage = "https://github.com/Pulvan/auditar-sdk"
+Documentation = "https://github.com/Pulvan/auditar-sdk/blob/main/README.md"
+Repository = "https://github.com/Pulvan/auditar-sdk"
+"Source" = "https://github.com/Pulvan/auditar-sdk"
