@@ -14,7 +14,7 @@ Zero-knowledge inference instrumentation for AI decision audit.
 - Local SQLite queue for air-gapped deployments
 - Sub-ms overhead
 
-This SDK is part of the Auditar platform for regulated AI in Indian financial services.
+Built for regulated AI in Indian financial services. [RBI FREE-AI 7-Sutras ready](https://github.com/Pulvan/auditar-sdk/blob/sdk/RBI_7SUTRAS_COMPLIANCE_MAPPING.md).
 
 ## Quick install
 
@@ -25,7 +25,7 @@ pip install auditar-sdk
 ## Quickstart
 
 ```python
-from auditar_sdk import AuditarClient, trace_inference
+from auditar_sdk import AuditarClient, trace_inference, InferenceSession
 
 client = AuditarClient(
     workspace="retail-lend-prod",
@@ -40,25 +40,44 @@ def predict(income, credit_score, age, existing_debt):
 prob = predict(income=75000, credit_score=680, age=35, existing_debt=12000)
 ```
 
-## From pip install to pilot
+## What you get in open source
 
-If you want audit-ready traces, RBI FREE-AI 7-Sutras mapping, and a governance dashboard without instrumenting every model yourself:
+- Inference observation without model access
+- Decorator + async decorator + batch context manager
+- Local queue for air-gapped environments
+- Deterministic decision records: inputs, outputs, model name, version, workspace, timestamp
+- No mandatory telemetry or outbound connectivity
 
-- **Free 8-week pilot**: we instrument your production models, you see results in 15 minutes.
-- **No credit card. No commitment.**
+## What you will need for production
 
-Start here: [auditar.in](https://auditar.in?utm_source=github&utm_medium=sdk&utm_campaign=launch#pilot)
+The open-source SDK is the instrumentation layer. For production governance in regulated financial services, you also need:
 
-After install, share your source so we can follow up with the right guide:
-- **GitHub / README**: post-install attribution page
-- **Email outreach**: ask your founder for the pilot timeline
-- **Hacker News / Reddit**: community feedback track
-- **Twitter / LinkedIn**: campaign-specific case study
+- Governance dashboard with workspace-level tenant isolation
+- RBI FREE-AI 7-Sutras compliance report export
+- Alerting, anomaly detection, and SLA reporting
+- Role-based access control and SSO
+- Centralized audit store with encryption at rest and append-only trail
+- Managed gateway and attribution pipeline
+- On-prem or private VPC deployment option
 
-If you came from an email, please reply to the founder who sent it so we can fast-track your pilot.
+Those capabilities are delivered through the Auditar platform after the free pilot.
 
-Email us directly: [foundersoffice@auditar.in](mailto:foundersoffice@auditar.in)
+If you are an ML Platform Lead at an Indian fintech, NBFC, or neo-bank, this is the fastest path from observability to compliance:
 
-## License
+1. `pip install auditar-sdk`
+2. Instrument your models locally
+3. 15-minute pilot kickoff with Auditar engineers
+4. Live production governance dashboard + RBI mapping
 
-MIT — see [LICENSE](LICENSE).
+**From pip install to pilot: https://auditar.in/?utm_source=github&utm_medium=sdk&utm_campaign=launch#pilot**
+
+## Docs
+
+- RBI mapping: `RBI_7SUTRAS_COMPLIANCE_MAPPING.md`
+- Production data sheet: `PILOT_PRODUCTION_DATA_SHEET.md`
+- Contributing: `CONTRIBUTING.md`
+- Issues: https://github.com/Pulvan/auditar-sdk/issues
+
+## Contact
+
+foundersoffice@auditar.in
