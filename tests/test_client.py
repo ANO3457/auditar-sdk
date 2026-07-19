@@ -81,6 +81,62 @@ class TestAuditarClient:
             raise AssertionError("Expected empty flush to be non-blocking")
         client.close()
 
+    def test_manual_flush_batch_semantics(self, tmp_path):
+        client = AuditarClient(
+            workspace="w",
+            endpoint="https://example.invalid",
+            batch_size=2,
+            flush_interval=100.0,
+            transport=LocalTransport(db_path=str(tmp_path / "q_batch.db")),
+        )
+        
+        # Manually add 5 decisions to bypass the automatic flush in emit()
+        decisions = [DecisionRecord(model_name=f"m{i}") for i in range(5)]
+        with client._lock:
+            client._pending.extend(decisions)
+            
+        assert client.pending_count() == 5
+        
+        # Mock send_batch
+        sent_batches = []
+        def mock_send_batch(batch):
+            sent_batches.append(batch)
+            return BatchResponse(batch_id=batch.batch_id, accepted=len(batch.decisions), failed=0, errors=[])
+            
+        client._http.send_batch = mock_send_batch
+        
+        # Perform manual flush
+        resp = client.manual_flush()
+        
+        # It should only flush one batch of batch_size (2)
+        assert resp is not None
+        assert resp.accepted == 2
+        assert len(sent_batches) == 1
+        assert [d.model_name for d in sent_batches[0].decisions] == ["m0", "m1"]
+        assert client.pending_count() == 3
+        
+        # Flush again
+        resp2 = client.manual_flush()
+        assert resp2 is not None
+        assert resp2.accepted == 2
+        assert len(sent_batches) == 2
+        assert [d.model_name for d in sent_batches[1].decisions] == ["m2", "m3"]
+        assert client.pending_count() == 1
+        
+        # Flush the remaining 1
+        resp3 = client.manual_flush()
+        assert resp3 is not None
+        assert resp3.accepted == 1
+        assert len(sent_batches) == 3
+        assert [d.model_name for d in sent_batches[2].decisions] == ["m4"]
+        assert client.pending_count() == 0
+        
+        # Flush empty
+        resp4 = client.manual_flush()
+        assert resp4 is None
+        
+        client.close()
+
     def test_sklearn_wrapper(self):
         pytest.importorskip("sklearn")
         from sklearn.dummy import DummyClassifier
