@@ -71,6 +71,30 @@ If you are an ML Platform Lead at an Indian fintech, NBFC, or neo-bank, this is 
 
 **From pip install to pilot: https://auditar.in/?utm_source=github&utm_medium=sdk&utm_campaign=launch#pilot**
 
+## Local queue overflow notifications
+
+`LocalTransport` accepts an optional synchronous `on_queue_full` callback:
+
+```python
+import logging
+from auditar_sdk.transport import LocalTransport
+
+transport = LocalTransport(
+    "auditar_queue.db",
+    on_queue_full=lambda error: logging.warning("Audit queue capacity reached: %s", error),
+)
+```
+
+The callback receives the same `QueueFullError` that `enqueue()` raises, after
+the SQLite connection is closed. It runs once for each rejected enqueue; successful
+enqueues do not call it. No decision payload is passed to the callback. Keep the
+callback fast: it runs synchronously on the enqueue caller's thread (which may be
+the client's flush timer). Do not call back into the same `AuditarClient` from this
+hook: a flush can hold the client's lock. Callback exceptions are logged and do not replace the
+original `QueueFullError`. The existing queue and overflow exception are preserved;
+this hook does not retry, drop old records, or increase capacity. Pass this transport
+to `AuditarClient(transport=transport, ...)` to observe client fallback overflows.
+
 ## Docs
 
 - RBI mapping: `RBI_7SUTRAS_COMPLIANCE_MAPPING.md`

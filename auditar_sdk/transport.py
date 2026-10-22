@@ -3,23 +3,32 @@
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import time
 import uuid
 from pathlib import Path
-from typing import List, Tuple
+from typing import Callable, List, Optional, Tuple
 
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from auditar_sdk.exceptions import QueueFullError
 from auditar_sdk.models import BatchRequest, DecisionRecord
 
+LOG = logging.getLogger(__name__)
+
 
 class LocalTransport:
     """Append-only local queue backed by SQLite."""
 
-    def __init__(self, db_path: str | Path = "auditar_queue.db") -> None:
+    def __init__(
+        self,
+        db_path: str | Path = "auditar_queue.db",
+        *,
+        on_queue_full: Optional[Callable[[QueueFullError], None]] = None,
+    ) -> None:
         self.db_path = Path(db_path)
+        self.on_queue_full = on_queue_full
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.max_rows = 100_000
         self._ensure_schema()
@@ -53,14 +62,16 @@ class LocalTransport:
 
     def enqueue(self, decision: DecisionRecord) -> None:
         conn = self._connect()
+        overflow = None
         try:
             row = conn.execute(
                 "SELECT COUNT(*) AS count FROM decisions"
             ).fetchone()
             if row["count"] >= self.max_rows:
-                raise QueueFullError(
+                overflow = QueueFullError(
                     f"Queue is full at {self.max_rows} records."
                 )
+                raise overflow
             conn.execute(
                 "INSERT INTO decisions(id, ts, model_name, model_version, use_case, body) VALUES(?, ?, ?, ?, ?, ?)",
                 (
@@ -75,6 +86,11 @@ class LocalTransport:
             conn.commit()
         finally:
             conn.close()
+            if overflow is not None and self.on_queue_full is not None:
+                try:
+                    self.on_queue_full(overflow)
+                except Exception:
+                    LOG.exception("Local queue overflow callback failed")
 
     def drain(self, batch_size: int = 1000) -> List[DecisionRecord]:
         conn = self._connect()
